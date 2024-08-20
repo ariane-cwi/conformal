@@ -2,6 +2,7 @@
 # LIBRARIES #
 #############
 
+
 libraries_sources = function(){
   library(survival)
   library(FastPseudo)
@@ -822,6 +823,9 @@ tobs.brcancer = brcancer$rectime
 delta.brcancer = brcancer$censrec
 tau.brcancer = quantile(tobs.brcancer,0.9,names=F)
 x.brcancer = brcancer %>% select(-rectime,-censrec)
+x.brcancer$hormon = factor(x.brcancer$hormon)
+x.brcancer$x2 = factor(x.brcancer$x2)
+x.brcancer$x4a = factor(x.brcancer$x4a)
 p = dim(x.brcancer)[2]
 
 ## Impact of covariates on censoring
