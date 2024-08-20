@@ -68,6 +68,8 @@
 #'   to conformal.pred.roo.surv (whether already run, or to be run inter-
 #'   nally, see below), loco.roo.surv and loco.surv.
 #'   Default is NULL, in which case the split is chosen randomly.
+#' @param rho Proportion of the data for the data-split in case it is chosen
+#'   randomly.
 #' @param seed Integer to be passed to set.seed. Default is NULL, which 
 #'   effectively sets no seed.
 #' @param out.roo.surv Output from running conformal.pred.roo.surv on the given  
@@ -113,11 +115,11 @@
 #'   Perduca, Bouaziz (2023) for the extension to right-censored data.
 #' @export rmst.pred
 
-rmst.pred = function(x, t, d, tau,  train.fun, predict.fun, w=NULL, 
-                     cens.model="km", CV=T, n.folds=10, prop=0.1, active.fun=NULL, alpha=0.1,  
-                     rho=0.5, varsL=0, varsG=0, bonf.correct=FALSE, mad.train.fun=NULL, 
-                     mad.predict.fun=NULL, split=NULL, seed=NULL, out.roo.surv=NULL, verbose=FALSE,
-                     error=T,roo=T,vimpL=T,vimpG=T) {
+rmst.pred = function(x, t, d, tau,  train.fun, predict.fun, w=NULL, cens.model="km", 
+                     CV=T, n.folds=10, prop=0.1, active.fun=NULL, alpha=0.1,  
+                     varsL=0, varsG=0, bonf.correct=FALSE, mad.train.fun=NULL, 
+                     mad.predict.fun=NULL, split=NULL, rho=0.5, seed=NULL, 
+                     out.roo.surv=NULL,  verbose=FALSE, error=T,roo=T,vimpL=T,vimpG=T) {
   
   # Set up data
   # x = as.matrix(x)
