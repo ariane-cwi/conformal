@@ -255,7 +255,7 @@ conformal.pred.split.surv = function(x, t, d, tau, x0, train.fun, predict.fun,
   if(!is.null(w)) w = as.numeric(w)
   n = nrow(x)
   p = ncol(x)
-  x0 = matrix(x0,ncol=p)
+  # x0 = matrix(x0,ncol=p)
   n0 = nrow(x0)
   
   # Check input arguments
