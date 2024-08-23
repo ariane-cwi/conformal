@@ -36,10 +36,21 @@ ipcw.km = function(t,d,x,tau){
   fit = survfit(Surv(t, d) ~ 1, data=df)
   censfct = stepfun(fit$time,c(1,fit$surv))
   G.hat.tau = censfct(tau)
-  w = as.double(lapply(1:n, function(s)
-    (t[s] <= tau)*d[s]/ifelse(d[s],censfct(t[s]),1) +
-      (t[s] > tau)/G.hat.tau )
-  )
+  w = as.double(lapply(1:n, function(s) {
+    if (t[s] <= tau) {
+      if (d[s] && censfct(t[s]) == 0) {
+        warning("Error in weight calculation: Division by zero")
+        return(NA)
+      }
+      return(d[s] / ifelse(d[s],censfct(t[s]),1))
+    } else {
+      if (G.hat.tau == 0) {
+        warning("Error in weight calculation: Division by zero")
+        return(NA)
+      }
+      return(1 / G.hat.tau)
+    }
+  }))
   return(w)
 }
 
@@ -54,13 +65,13 @@ ipcw.cox = function(t,d,x,tau){
         warning("Error in weight calculation: Division by zero")
         return(NA)
       }
-      return((t[s] <= tau) * d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
+      return(d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
     } else {
       if (censfct[[s]](tau) == 0) {
         warning("Error in weight calculation: Division by zero")
         return(NA)
       }
-      return((t[s] > tau) / censfct[[s]](tau))
+      return(1 / censfct[[s]](tau))
     }
   }))
   return(w)
@@ -77,13 +88,13 @@ ipcw.rfsrc = function(t,d,x,tau){
         warning("Error in weight calculation: Division by zero")
         return(NA)
       }
-      return((t[s] <= tau) * d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
+      return(d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
     } else {
       if (censfct[[s]](tau) == 0) {
         warning("Error in weight calculation: Division by zero")
         return(NA)
       }
-      return((t[s] > tau) / censfct[[s]](tau))
+      return(1 / censfct[[s]](tau))
     }
   }))
   return(w)
