@@ -36,10 +36,19 @@ ipcw.km = function(t,d,x,tau){
   fit = survfit(Surv(t, d) ~ 1, data=df)
   censfct = stepfun(fit$time,c(1,fit$surv))
   G.hat.tau = censfct(tau)
-  w = as.double(lapply(1:n, function(s)
-    (t[s] <= tau)*d[s]/ifelse(d[s],censfct(t[s]),1) +
-      (t[s] > tau)/G.hat.tau )
-  )
+  w = as.double(lapply(1:n, function(s) {
+    if (t[s] <= tau) {
+      if (d[s] && censfct[[s]](t[s]) == 0) {
+        stop("Error in weight calculation: Division by zero")
+      }
+      return((t[s] <= tau) * d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
+    } else {
+      if (censfct[[s]](tau) == 0) {
+        stop("Error in weight calculation: Division by zero")
+      }
+      return((t[s] > tau) / censfct[[s]](tau))
+    }
+  }))
   return(w)
 }
 
@@ -48,11 +57,19 @@ ipcw.cox = function(t,d,x,tau){
   df = data.frame(t=t,d=1-d,x)
   fit = survfit(coxph(Surv(t, d) ~ ., data=df), newdata=data.frame(x))
   censfct = sapply(1:n,function(j) stepfun(fit$time,c(1,fit$surv[,j])))
-  w = as.double(lapply(1:n, function(s)
-    (t[s] <= tau)*d[s]/ifelse(d[s],censfct[[s]](t[s]),1) +
-      (t[s] > tau)/censfct[[s]](tau) )
-  )
-  
+  w = as.double(lapply(1:n, function(s) {
+    if (t[s] <= tau) {
+      if (d[s] && censfct[[s]](t[s]) == 0) {
+        stop("Error in weight calculation: Division by zero")
+      }
+      return((t[s] <= tau) * d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
+    } else {
+      if (censfct[[s]](tau) == 0) {
+        stop("Error in weight calculation: Division by zero")
+      }
+      return((t[s] > tau) / censfct[[s]](tau))
+    }
+  }))
   return(w)
 }
 
@@ -61,9 +78,18 @@ ipcw.rfsrc = function(t,d,x,tau){
   df = data.frame(t=t,d=1-d,x)
   fit = rfsrc(Surv(t, d) ~ ., data=df)
   censfct = sapply(1:n,function(j) stepfun(fit$time.interest,c(1,fit$survival[j,])))
-  w = as.double(lapply(1:n, function(s)
-    (t[s] <= tau)*d[s]/ifelse(d[s],censfct[[s]](t[s]),1) +
-      (t[s] > tau)/censfct[[s]](tau) )
-  )
+  w = as.double(lapply(1:n, function(s) {
+    if (t[s] <= tau) {
+      if (d[s] && censfct[[s]](t[s]) == 0) {
+        stop("Error in weight calculation: Division by zero")
+      }
+      return((t[s] <= tau) * d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
+    } else {
+      if (censfct[[s]](tau) == 0) {
+        stop("Error in weight calculation: Division by zero")
+      }
+      return((t[s] > tau) / censfct[[s]](tau))
+    }
+  }))
   return(w)
 }
