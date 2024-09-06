@@ -331,7 +331,7 @@ get.signif.code = function(v) {
 #'   predictions.
 #' @param w Censoring weights. This should be a vector of length n. 
 #'   Default is NULL, in which case censoring weights are computed using the 
-#'   Kaplan-Meier model. 
+#'   Kaplan-Meier model, using only the second half of the data. 
 #' @param active.fun A function which takes the output of train.fun, and reports
 #'   which features are active for each fitted model contained in this output.
 #'   Its only input argument should be out: output produced by train.fun.
@@ -419,7 +419,10 @@ loco.surv = function(x, t, d, tau, train.fun, predict.fun, w=NULL,
   # Censoring weights
   if(is.null(w)){
     if (verbose) cat(sprintf("%sComputing censoring weights ...\n",txt))
-    w = ipcw(t,d,x,tau,cens.model="km")
+    w2 = ipcw(t[i2],d[i2],x[i2,,drop=F],tau,cens.model="km")
+  }
+  else{
+    w2 = w[i2]
   }
   
   # Train on first part
@@ -490,7 +493,7 @@ loco.surv = function(x, t, d, tau, train.fun, predict.fun, w=NULL,
     for (j in Seq(1,k)) {
       j.master = which(master == active[[l]][j])
       z = res.drop[[j.master]][,l] - res[,l]
-      inf.sign[[l]][j,] = my.surv.sign.test(t[i2],d[i2],w[i2],z,
+      inf.sign[[l]][j,] = my.surv.sign.test(t[i2],d[i2],w2,z,
                                             tau,alpha,k,bonf.correct)
     }
     
