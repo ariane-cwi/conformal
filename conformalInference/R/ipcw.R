@@ -54,27 +54,41 @@ ipcw.km = function(t,d,x,tau){
   return(w)
 }
 
+# ipcw.cox = function(t,d,x,tau){
+#   n = length(t)
+#   df = data.frame(t=t,d=1-d,x)
+#   fit = survfit(coxph(Surv(t, d) ~ ., data=df), newdata=data.frame(x))
+#   censfct = sapply(1:n,function(j) stepfun(fit$time,c(1,fit$surv[,j])))
+#   w = as.double(lapply(1:n, function(s) {
+#     if (t[s] <= tau) {
+#       if (d[s] && censfct[[s]](t[s]) == 0) {
+#         warning("Error in weight calculation: Division by zero")
+#         return(NA)
+#       }
+#       return(d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
+#     } else {
+#       if (censfct[[s]](tau) == 0) {
+#         warning("Error in weight calculation: Division by zero")
+#         return(NA)
+#       }
+#       return(1 / censfct[[s]](tau))
+#     }
+#   }))
+#   return(w)
+# }
+
 ipcw.cox = function(t,d,x,tau){
   n = length(t)
   df = data.frame(t=t,d=1-d,x)
-  fit = survfit(coxph(Surv(t, d) ~ ., data=df), newdata=data.frame(x))
-  censfct = sapply(1:n,function(j) stepfun(fit$time,c(1,fit$surv[,j])))
-  w = as.double(lapply(1:n, function(s) {
-    if (t[s] <= tau) {
-      if (d[s] && censfct[[s]](t[s]) == 0) {
-        warning("Error in weight calculation: Division by zero")
-        return(NA)
-      }
-      return(d[s] / ifelse(d[s],censfct[[s]](t[s]),1))
-    } else {
-      if (censfct[[s]](tau) == 0) {
-        warning("Error in weight calculation: Division by zero")
-        return(NA)
-      }
-      return(1 / censfct[[s]](tau))
-    }
-  }))
-  return(w)
+  coxfitC = coxph(Surv(t, d) ~ ., data=df)
+  cumlambdaC = basehaz(coxfitC,centered=FALSE) #cumulative baseline hazard
+  hazC=diff(c(0,cumlambdaC$hazard)) #baseline hazard
+  timeC=cumlambdaC$time[hazC!=0] #times where the hazard is not null
+  hazC=hazC[hazC!=0] #hazard for the times where the hazard is not null
+  baseC_fun = stepfun(timeC,c(0,cumsum(hazC)))
+  G.hat.t = exp(-baseC_fun(t)*exp(as.matrix(x)%*%coxfitC$coefficients))
+  G.hat.tau = exp(-baseC_fun(tau)*exp(as.matrix(x)%*%coxfitC$coefficients))
+  return(ifelse(t<=tau,d/G.hat.t,1/G.hat.tau))
 }
 
 ipcw.rfsrc = function(t,d,x,tau){
